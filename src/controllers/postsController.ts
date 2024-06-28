@@ -24,14 +24,14 @@ export const getPosts = async (req: Request, res: Response, next: NextFunction) 
 };
 
 // @desc Get a single post
-// @route GET /api/posts/:id
+// @route GET /api/posts/:postId
 // @access Public
 export const getPost = async (req: Request, res: Response, next: NextFunction) => {
-	const id = parseInt(req.params.id);
+	const postId = parseInt(req.params.postId);
 
 	let post: PostType | null = null;
 	try {
-		post = await posts.getPost(id);
+		post = await posts.getPost(postId);
 	} catch (error) {
 		const customError = new CustomError(error.message);
 		customError.status = 500;
@@ -73,10 +73,10 @@ export const createPost = async (req: Request, res: Response, next: NextFunction
 };
 
 // @desc Update a post
-// @route PUT /api/posts/:id
+// @route PUT /api/posts/:postId
 // @access Private
 export const updatePost = async (req: Request, res: Response, next: NextFunction) => {
-	const id = parseInt(req.params.id);
+	const postId = parseInt(req.params.postId);
 	const data = {
 		token: req.headers.authorization?.split(" ")[1],
 		title: req.body.title,
@@ -84,7 +84,7 @@ export const updatePost = async (req: Request, res: Response, next: NextFunction
 	};
 
 	try {
-		const post = await posts.updatePost(id, data);
+		const post = await posts.updatePost(postId, data);
 
 		res.status(200).json({
 			success: true,
@@ -103,19 +103,102 @@ export const updatePost = async (req: Request, res: Response, next: NextFunction
 };
 
 // @desc Delete a post
-// @route DELETE /api/posts/:id
+// @route DELETE /api/posts/:postId
 // @access Private
 export const deletePost = async (req: Request, res: Response, next: NextFunction) => {
-	const id = parseInt(req.params.id);
+	const postId = parseInt(req.params.postId);
 	const data = {
 		token: req.headers.authorization?.split(" ")[1],
 	};
 
 	try {
-		await posts.deletePost(id, data);
+		await posts.deletePost(postId, data);
 		res.status(200).json({
 			success: true,
 			message: "Post deleted successfully",
+		});
+	} catch (error) {
+		if (error instanceof CustomError) {
+			return next(error);
+		} else {
+			const customError = new CustomError(error.message);
+			customError.status = 500;
+			return next(customError);
+		}
+	}
+};
+
+// @desc Like a post
+// @route POST /api/posts/:postId/like
+// @access Private
+export const toggleLikePost = async (req: Request, res: Response, next: NextFunction) => {
+	const postId = parseInt(req.params.postId);
+	const data = {
+		token: req.headers.authorization?.split(" ")[1],
+	};
+
+	try {
+		const hasLiked = await posts.toggleLikePost(postId, data);
+
+		res.status(200).json({
+			success: true,
+			message: hasLiked ? "Post unliked successfully" : "Post liked successfully",
+		});
+	} catch (error) {
+		if (error instanceof CustomError) {
+			return next(error);
+		} else {
+			const customError = new CustomError(error.message);
+			customError.status = 500;
+			return next(customError);
+		}
+	}
+};
+
+// @desc Comment on a post
+// @route POST /api/posts/:postId/comment
+// @access Private
+export const createComment = async (req: Request, res: Response, next: NextFunction) => {
+	const postId = parseInt(req.params.postId);
+	const data = {
+		token: req.headers.authorization?.split(" ")[1],
+		comment: req.body.comment,
+	};
+
+	try {
+		const comment = await posts.createComment(postId, data);
+
+		res.status(200).json({
+			success: true,
+			message: "Comment added successfully",
+			data: comment,
+		});
+	} catch (error) {
+		if (error instanceof CustomError) {
+			return next(error);
+		} else {
+			const customError = new CustomError(error.message);
+			customError.status = 500;
+			return next(customError);
+		}
+	}
+};
+
+// @desc Delete a comment
+// @route DELETE /api/posts/:postId/comment/:commentId
+// @access Private
+export const deleteComment = async (req: Request, res: Response, next: NextFunction) => {
+	const commentId = parseInt(req.params.commentId);
+	const data = {
+		token: req.headers.authorization?.split(" ")[1],
+	};
+
+	try {
+		await posts.deleteComment(commentId, data);
+
+		res.status(200).json({
+			success: true,
+			message: "Comment deleted successfully",
 		});
 	} catch (error) {
 		if (error instanceof CustomError) {

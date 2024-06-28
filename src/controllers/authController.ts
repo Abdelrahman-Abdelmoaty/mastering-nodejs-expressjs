@@ -34,7 +34,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 
 	if (!user) {
 		const error = new CustomError("User already exists");
-		error.status = 400;
+		error.status = 409;
 
 		return next(error);
 	}

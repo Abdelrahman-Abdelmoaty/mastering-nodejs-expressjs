@@ -5,6 +5,9 @@ import {
 	getPost,
 	getPosts,
 	updatePost,
+	toggleLikePost,
+	createComment,
+	deleteComment,
 } from "../controllers/postsController";
 import authenticate from "../middlewares/authenticate";
 
@@ -15,15 +18,24 @@ const router = express.Router();
 router.get("/", getPosts);
 
 // Get a single post
-router.get("/:id", getPost);
+router.get("/:postId", getPost);
 
 // Create a new post
 router.post("/", authenticate, createPost);
 
 // Update a post
-router.put("/:id", authenticate, updatePost);
+router.put("/:postId", authenticate, updatePost);
 
 // Delete a post
-router.delete("/:id", authenticate, deletePost);
+router.delete("/:postId", authenticate, deletePost);
+
+// Like a post
+router.post("/:postId/like", authenticate, toggleLikePost);
+
+// Comment on a post
+router.post("/:postId/comment", authenticate, createComment);
+
+// Delete a comment
+router.delete("/:postId/comment/:commentId", authenticate, deleteComment);
 
 export default router;

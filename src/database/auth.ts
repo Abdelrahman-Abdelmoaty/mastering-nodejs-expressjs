@@ -1,10 +1,10 @@
-import prisma from "../utils/db";
+import prisma from "../lib/db";
 import * as jose from "jose";
 import bcrypt from "bcrypt";
 import { User } from "@prisma/client";
 import { RegisterType } from "../schemas/register";
 import { LoginType } from "../schemas/login";
-import { excludeFields } from "../utils/lib";
+import { excludeFields } from "../lib/utils";
 
 export const register = async (data: RegisterType) => {
 	const userExists = await prisma.user.findUnique({

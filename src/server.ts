@@ -4,22 +4,31 @@ import auth from "./routes/auth";
 import logger from "./middlewares/logger";
 import errorHandler from "./middlewares/error";
 import notFound from "./middlewares/notFound";
-import "./utils/db";
-// import authenticate from "./middlewares/authenticate";
+import cors from "cors";
+import dotenv from "dotenv";
 
 // env
-import dotenv from "dotenv";
 dotenv.config();
 
+// Express
 const app = express();
 const port = process.env.PORT || 8080;
 
-app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
+// cors
+const corsOptions = {
+	credentials: true,
+	origin: ["http://localhost:5173"],
+};
+app.use(cors(corsOptions));
 
-// Middleware
+// Body parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Middlewares
+
+// Logger
 app.use(logger);
-// app.use(authenticate);
 
 // Routes
 app.use("/api/auth", auth);
@@ -29,6 +38,7 @@ app.use("/api/posts", posts);
 app.use(notFound);
 app.use(errorHandler);
 
+// Server
 app.listen(port, () => {
 	console.log(`Server is running on port ${port}`);
 });

@@ -1,4 +1,6 @@
-import prisma from "../utils/db";
+import prisma from "./db";
+import dotenv from "dotenv";
+dotenv.config();
 
 async function main() {
 	// Insert Users
