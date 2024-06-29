@@ -23,27 +23,22 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 		return next(err);
 	}
 
-	let user: UserType | null = null;
 	try {
-		user = await auth.register(data);
+		const user = await auth.register(data);
+		res.status(201).json({
+			success: true,
+			message: "User registered successfully",
+			data: user,
+		});
 	} catch (error) {
-		const err = new CustomError(error.message);
-		err.status = 500;
-		return next(err);
+		if (error instanceof CustomError) {
+			return next(error);
+		} else {
+			const customError = new CustomError(error.message);
+			customError.status = 500;
+			return next(customError);
+		}
 	}
-
-	if (!user) {
-		const error = new CustomError("User already exists");
-		error.status = 409;
-
-		return next(error);
-	}
-
-	res.status(201).json({
-		success: true,
-		message: "User registered successfully",
-		data: user,
-	});
 };
 
 // @desc Login a user
@@ -64,27 +59,22 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 		return next(err);
 	}
 
-	let user: UserType | null = null;
 	try {
-		user = await auth.login(data);
+		const user = await auth.login(data);
+		res.status(200).json({
+			success: true,
+			message: "User logged in successfully",
+			data: user,
+		});
 	} catch (error) {
-		const err = new CustomError(error.message);
-		err.status = 500;
-		return next(err);
+		if (error instanceof CustomError) {
+			return next(error);
+		} else {
+			const customError = new CustomError(error.message);
+			customError.status = 500;
+			return next(customError);
+		}
 	}
-
-	if (!user) {
-		const error = new CustomError("Invalid credentials");
-		error.status = 401;
-
-		return next(error);
-	}
-
-	res.status(200).json({
-		success: true,
-		message: "User logged in successfully",
-		data: user,
-	});
 };
 
 // @desc Get session user
@@ -99,25 +89,50 @@ export const getSession = async (req: Request, res: Response, next: NextFunction
 		return next(error);
 	}
 
-	let user: UserType | null = null;
 	try {
-		user = await auth.getSession(token);
+		const user = await auth.getSession(token);
+		res.status(200).json({
+			success: true,
+			message: "Session retrieved successfully",
+			data: user,
+		});
 	} catch (error) {
-		const err = new CustomError(error.message);
-		err.status = 500;
-		return next(err);
+		if (error instanceof CustomError) {
+			return next(error);
+		} else {
+			const customError = new CustomError(error.message);
+			customError.status = 500;
+			return next(customError);
+		}
 	}
+};
 
-	if (!user) {
-		const error = new CustomError("Unauthorized");
-		error.status = 401;
+// @desc Forgot password
+// @route POST /api/auth/forgot-password
+// @access Public
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+	const email = req.body.email;
+
+	if (!email) {
+		const error = new CustomError("Email is required");
+		error.status = 400;
 
 		return next(error);
 	}
 
-	res.status(200).json({
-		success: true,
-		message: "Session retrieved successfully",
-		data: user,
-	});
+	try {
+		await auth.forgotPassword(email);
+		res.status(200).json({
+			success: true,
+			message: "Reset password link sent to email",
+		});
+	} catch (error) {
+		if (error instanceof CustomError) {
+			return next(error);
+		} else {
+			const customError = new CustomError(error.message);
+			customError.status = 500;
+			return next(customError);
+		}
+	}
 };

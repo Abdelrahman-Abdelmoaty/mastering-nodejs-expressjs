@@ -5,6 +5,8 @@ import { User } from "@prisma/client";
 import { RegisterType } from "../schemas/register";
 import { LoginType } from "../schemas/login";
 import { excludeFields } from "../lib/utils";
+import CustomError from "../errors/CustomError";
+import sendEmail from "../lib/nodemailer";
 
 export const register = async (data: RegisterType) => {
 	const userExists = await prisma.user.findUnique({
@@ -14,7 +16,9 @@ export const register = async (data: RegisterType) => {
 	});
 
 	if (userExists) {
-		return null;
+		const error = new CustomError("Username already exists");
+		error.status = 400;
+		throw error;
 	}
 
 	const user = await prisma.user.create({
@@ -61,13 +65,17 @@ export const login = async (data: LoginType) => {
 	}
 
 	if (!user) {
-		return null;
+		const error = new CustomError("User not found");
+		error.status = 404;
+		throw error;
 	}
 
 	const match = await bcrypt.compare(data.pwd, user.pwd);
 
 	if (!match) {
-		return null;
+		const error = new CustomError("Invalid credentials");
+		error.status = 401;
+		throw error;
 	}
 
 	const secretKey = await jose.importJWK(
@@ -100,7 +108,9 @@ export const getSession = async (token: string) => {
 
 		const { payload } = await jose.jwtVerify(token, secretKey);
 		if (!payload.email) {
-			return null;
+			const error = new CustomError("Invalid token");
+			error.status = 401;
+			throw error;
 		}
 
 		const user = await prisma.user.findUnique({
@@ -110,7 +120,9 @@ export const getSession = async (token: string) => {
 		});
 
 		if (!user) {
-			return null;
+			const error = new CustomError("User not found");
+			error.status = 404;
+			throw error;
 		}
 
 		const refreshedToken = await new jose.SignJWT({
@@ -126,5 +138,30 @@ export const getSession = async (token: string) => {
 		return { ...userWithoutPassword, token: refreshedToken };
 	} catch (error) {
 		return null;
+	}
+};
+
+export const forgotPassword = async (email: string) => {
+	const user = await prisma.user.findUnique({
+		where: {
+			email,
+		},
+	});
+
+	if (!user) {
+		const error = new CustomError("User not found");
+		error.status = 404;
+		throw error;
+	}
+	try {
+		await sendEmail(
+			user.email,
+			"Password Reset",
+			`Click this link to reset your password: ${process.env.CLIENT_URL}/reset-password?email=${user.email}`,
+			`<a href="${process.env.CLIENT_URL}/reset-password?email=${user.email}">Click here to reset your password</a>`
+		);
+	} catch (error) {
+		console.log("Error sending email");
+		console.log(error);
 	}
 };

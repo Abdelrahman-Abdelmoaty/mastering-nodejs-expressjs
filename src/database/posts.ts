@@ -5,6 +5,12 @@ import { getSession } from "./auth";
 export const getPosts = async () => {
 	const posts = await prisma.post.findMany({
 		include: {
+			user: {
+				select: {
+					userId: true,
+					username: true,
+				},
+			},
 			likes: {
 				select: {
 					userId: true,
@@ -27,6 +33,12 @@ export const getPost = async (id: number) => {
 			postId: id,
 		},
 		include: {
+			user: {
+				select: {
+					userId: true,
+					username: true,
+				},
+			},
 			likes: {
 				select: {
 					userId: true,
